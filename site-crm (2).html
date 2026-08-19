@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#dd5a1c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Mayur Traders — Site Visit CRM</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23dd5a1c'/%3E%3Ctext x='50' y='64' font-family='Arial,sans-serif' font-size='42' font-weight='700' fill='white' text-anchor='middle'%3EMT%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23dd5a1c'/%3E%3Ctext x='50' y='64' font-family='Arial,sans-serif' font-size='42' font-weight='700' fill='white' text-anchor='middle'%3EMT%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+  :root{
+    --bg:#eef2f6;
+    --surface:#ffffff;
+    --surface2:#f4f7fa;
+    --border:#dbe3ea;
+    --text:#1c2733;
+    --text-muted:#66788c;
+    --accent:#dd5a1c;
+    --accent-dim:#fde4d4;
+    --steel-blue:#1c6b9c;
+    --new:#8a97a6;
+    --contacted:#1c7ed6;
+    --quoted:#e08600;
+    --won:#2f9e44;
+    --lost:#e03131;
+    --small:#3f8a56;
+    --mid:#d1892c;
+    --large:#d1482c;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(28,39,51,.06), 0 4px 14px rgba(28,39,51,.06);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
+  h1,h2,h3,.brand,.nav-btn,.seg-btn,.tab-btn{font-family:'Oswald',sans-serif;letter-spacing:.02em;text-transform:uppercase;}
+  ::selection{background:var(--accent);color:#fff;}
+
+  /* corrugated divider signature element */
+  .corrugate{
+    height:10px;width:100%;
+    background: repeating-linear-gradient(100deg, transparent 0 6px, var(--border) 6px 7px, transparent 7px 16px);
+    opacity:.8;margin:4px 0 18px;
+  }
+
+  input,select,textarea,button{font-family:'Inter',sans-serif;font-size:15px;}
+  input,select,textarea{
+    width:100%;padding:12px 13px;border-radius:10px;border:1.5px solid var(--border);
+    background:var(--surface);color:var(--text);outline:none;transition:border-color .15s;
+  }
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+  label{display:block;font-size:12.5px;color:var(--text-muted);margin:14px 0 6px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
+  textarea{resize:vertical;min-height:64px;}
+
+  button{cursor:pointer;border:none;border-radius:10px;font-weight:600;}
+  .btn-primary{background:var(--accent);color:#fff;padding:15px 18px;font-size:16px;width:100%;box-shadow:0 3px 10px rgba(221,90,28,.35);transition:transform .1s,opacity .1s;}
+  .btn-primary:active{opacity:.88;transform:scale(.99);}
+  .btn-ghost{background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:10px 14px;}
+  .btn-ghost:hover{border-color:var(--accent);}
+
+  /* ===== top bar ===== */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;box-shadow:0 1px 0 rgba(28,39,51,.03);}
+  .brand{font-size:19px;color:var(--text);}
+  .brand span{color:var(--accent);}
+  .brand small{display:block;font-family:'Inter',sans-serif;text-transform:none;letter-spacing:0;color:var(--text-muted);font-size:11px;font-weight:400;}
+  .logout{font-size:12px;color:var(--text-muted);background:none;border:none;text-decoration:underline;}
+
+  .wrap{max-width:900px;margin:0 auto;padding:18px;}
+  .hidden{display:none !important;}
+
+  /* ===== setup / login screens ===== */
+  .center-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:26px;width:100%;max-width:420px;box-shadow:var(--shadow);}
+  .card h2{margin-top:0;}
+  .role-pick{display:flex;gap:12px;margin-top:16px;}
+  .role-pick button{flex:1;padding:22px 10px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:24px;transition:transform .1s;}
+  .role-pick button:active{transform:scale(.97);}
+  .role-pick button:hover{border-color:var(--accent);}
+  .setup-note{background:var(--surface2);border-left:3px solid var(--accent);padding:12px 14px;border-radius:6px;font-size:13.5px;color:var(--text-muted);line-height:1.5;margin-top:14px;}
+  code{background:#eef1f4;padding:2px 6px;border-radius:4px;color:#b3450f;font-size:12.5px;}
+
+  /* ===== segmented control ===== */
+  .seg{display:flex;gap:8px;margin-top:6px;}
+  .seg-btn{flex:1;padding:11px 6px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-muted);font-size:13px;}
+  .seg-btn.active[data-val="small"]{background:var(--small);border-color:var(--small);color:#fff;}
+  .seg-btn.active[data-val="mid"]{background:var(--mid);border-color:var(--mid);color:#fff;}
+  .seg-btn.active[data-val="large"]{background:var(--large);border-color:var(--large);color:#fff;}
+
+  /* ===== checkbox chips ===== */
+  .chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+  .chip{padding:9px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-muted);font-size:13.5px;}
+  .chip.active{background:var(--accent-dim);border-color:var(--accent);color:#b3450f;}
+
+  /* ===== field entry ===== */
+  .section-title{font-size:14px;color:var(--accent);margin-top:22px;margin-bottom:2px;font-weight:700;}
+  .recent-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow);}
+  .recent-item .rname{font-weight:600;}
+  .recent-item .rmeta{color:var(--text-muted);font-size:12.5px;margin-top:3px;}
+
+  /* ===== tabs (admin) ===== */
+  .tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:5px;margin-bottom:16px;overflow-x:auto;box-shadow:var(--shadow);}
+  .tab-btn{flex:1;padding:10px 6px;border-radius:10px;background:transparent;color:var(--text-muted);font-size:11.5px;white-space:nowrap;}
+  .tab-btn.active{background:var(--accent);color:#fff;}
+
+  /* ===== stat cards ===== */
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);}
+  .stat-num{font-family:'Oswald',sans-serif;font-size:26px;color:var(--accent);}
+  .stat-label{font-size:11.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;}
+
+  /* ===== filters ===== */
+  .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .filter-row select,.filter-row input{width:auto;flex:1;min-width:120px;padding:9px 10px;font-size:13px;}
+
+  /* ===== list / cards ===== */
+  .item-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow);}
+  .item-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .item-title{font-weight:700;font-size:15.5px;}
+  .item-sub{color:var(--text-muted);font-size:12.5px;margin-top:2px;}
+  .badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;}
+  .badge-new{background:#e8ebef;color:#4a5a6b;}
+  .badge-contacted{background:#d7ecfc;color:#0b5da3;}
+  .badge-quoted{background:#fdedcf;color:#a6600a;}
+  .badge-won{background:#d9f2df;color:#1f7a35;}
+  .badge-lost{background:#fbdada;color:#b02323;}
+  .size-tag{padding:3px 9px;border-radius:5px;font-size:10.5px;font-weight:700;text-transform:uppercase;}
+  .size-small{background:var(--small);color:#fff;}
+  .size-mid{background:var(--mid);color:#fff;}
+  .size-large{background:var(--large);color:#fff;}
+  .item-body{margin-top:10px;font-size:13.5px;color:var(--text-muted);line-height:1.6;}
+  .item-body b{color:var(--text);}
+  .item-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+  .item-actions select{width:auto;flex:1;min-width:120px;font-size:12.5px;padding:8px 10px;}
+  .req-tag{display:inline-block;background:var(--surface2);border:1px solid var(--border);padding:2px 9px;border-radius:5px;font-size:11.5px;margin:2px 4px 2px 0;color:var(--text);}
+
+  .empty-state{text-align:center;padding:40px 20px;color:var(--text-muted);}
+  .empty-state h3{color:var(--text);font-family:'Oswald',sans-serif;margin-bottom:6px;}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--won);color:#fff;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:600;z-index:200;box-shadow:0 6px 18px rgba(0,0,0,.18);}
+
+  /* ===== modal ===== */
+  .modal-overlay{position:fixed;inset:0;background:rgba(20,26,33,.5);display:flex;align-items:center;justify-content:center;z-index:300;padding:18px;}
+  .modal-card{background:var(--surface);border-radius:var(--radius);padding:22px;width:100%;max-width:460px;max-height:88vh;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,.25);}
+  .modal-card h3{margin-top:0;}
+  .modal-actions{display:flex;gap:8px;margin-top:20px;}
+  .modal-actions button{flex:1;}
+  .btn-danger{background:#fbdada;color:#b02323;padding:10px 14px;}
+  .btn-danger:hover{background:#f7c4c4;}
+
+  /* ===== logged-in bar / small buttons ===== */
+  .loggedin-bar{display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-top:4px;font-size:13.5px;}
+  .btn-sm{padding:6px 12px;font-size:11.5px;background:var(--surface);border:1.5px solid var(--border);color:var(--text);}
+  .btn-sm:hover{border-color:var(--accent);}
+  .icon-btn{background:transparent;border:none;color:var(--text-muted);font-size:12.5px;padding:4px 8px;text-decoration:underline;}
+  .user-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .user-badge-active{background:#d9f2df;color:#1f7a35;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700;text-transform:uppercase;}
+  .user-badge-inactive{background:#e8ebef;color:#4a5a6b;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700;text-transform:uppercase;}
+
+  @media(min-width:640px){
+    .item-actions select{flex:none;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== TRIAL BANNER ===================== -->
+<div id="trialBanner" class="hidden" style="background:var(--accent-dim);color:#a6440d;text-align:center;font-size:12.5px;padding:8px 12px;border-bottom:1px solid var(--accent);">
+  🧪 Trial mode — data is saved only in this browser, not synced to your team. Connect Firebase when ready to go live.
+</div>
+
+<!-- ===================== LOGIN SCREEN ===================== -->
+<div id="loginScreen" class="center-screen hidden">
+  <div class="card">
+    <h2>Mayur Traders <span style="color:var(--accent)">CRM</span></h2>
+    <p style="color:var(--text-muted);font-size:13.5px;">Site visit tracking</p>
+    <div id="rolePick" class="role-pick">
+      <button onclick="selectRole('field')">📋<br><span style="font-size:14px;">Field Entry</span></button>
+      <button onclick="selectRole('admin')">📊<br><span style="font-size:14px;">Admin</span></button>
+    </div>
+
+    <!-- ADMIN PIN LOGIN -->
+    <div id="adminPinBox" class="hidden">
+      <label>Admin PIN</label>
+      <input type="password" id="adminPinInput" inputmode="numeric" placeholder="••••" maxlength="6">
+      <button class="btn-primary" style="margin-top:14px;" onclick="checkAdminPin()">Continue</button>
+      <button class="icon-btn" style="margin-top:8px;" onclick="backToRolePick()">← Back</button>
+      <div id="adminPinError" style="color:#e03131;font-size:12.5px;margin-top:8px;"></div>
+    </div>
+
+    <!-- FIELD USER LOGIN -->
+    <div id="fieldLoginBox" class="hidden">
+      <div id="fieldNoUsersMsg" class="hidden" style="font-size:13.5px;color:var(--text-muted);line-height:1.5;margin-top:10px;">
+        No field accounts yet. Ask your admin to create one from the Admin → Users tab.
+      </div>
+      <div id="fieldLoginFields" class="hidden">
+        <label>Select your name</label>
+        <select id="fieldUserSelect"></select>
+        <label>Password</label>
+        <input type="password" id="fieldPasswordInput" placeholder="••••">
+        <button class="btn-primary" style="margin-top:14px;" onclick="checkFieldLogin()">Continue</button>
+        <div id="fieldLoginError" style="color:#e03131;font-size:12.5px;margin-top:8px;"></div>
+      </div>
+      <button class="icon-btn" style="margin-top:8px;" onclick="backToRolePick()">← Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== FIELD ENTRY VIEW ===================== -->
+<div id="fieldView" class="hidden">
+  <div class="topbar">
+    <div class="brand">Mayur Traders <span>CRM</span><small id="fieldUserLabel"></small></div>
+    <button class="logout" onclick="logout()">Log out</button>
+  </div>
+  <div class="wrap">
+
+    <div class="corrugate"></div>
+    <h2 style="margin:0 0 4px;" id="fieldFormTitle">New Site Visit</h2>
+    <p style="color:var(--text-muted);font-size:13px;margin-top:0;">Fill this after every site visit — takes under a minute.</p>
+
+    <div class="loggedin-bar">
+      <span>Logged in as <b id="loggedInUserName"></b></span>
+      <button class="icon-btn" onclick="openChangePassword()">Change password</button>
+    </div>
+
+    <div class="section-title">Customer</div>
+    <label>Customer name *</label>
+    <input type="text" id="f_custName" list="custNameList" placeholder="Full name" oninput="autofillCustomerByName()">
+    <datalist id="custNameList"></datalist>
+    <label>Contact number * <span style="text-transform:none;font-weight:400;">(existing customer? just pick from list)</span></label>
+    <input type="tel" id="f_custContact" list="custContactList" inputmode="numeric" placeholder="10-digit mobile number" oninput="autofillCustomerByContact()">
+    <datalist id="custContactList"></datalist>
+    <label>Address</label>
+    <textarea id="f_custAddress" placeholder="Site / customer address"></textarea>
+    <label>Site location / village</label>
+    <input type="text" id="f_siteLocation" list="siteLocationList" placeholder="e.g. Chandwad Road, Manmad">
+    <datalist id="siteLocationList"></datalist>
+
+    <div class="section-title">Project</div>
+    <label>Project size</label>
+    <div class="seg" id="f_projectSize">
+      <button type="button" class="seg-btn" data-val="small" onclick="pickSeg('f_projectSize',this)">Small</button>
+      <button type="button" class="seg-btn" data-val="mid" onclick="pickSeg('f_projectSize',this)">Mid</button>
+      <button type="button" class="seg-btn" data-val="large" onclick="pickSeg('f_projectSize',this)">Large</button>
+    </div>
+
+    <label>Requirement</label>
+    <div class="chip-row" id="f_requirements">
+      <button type="button" class="chip" data-val="structuralSteel" onclick="toggleChip(this)">Structural Steel</button>
+      <button type="button" class="chip" data-val="roofingSheet" onclick="toggleChip(this)">Roofing Sheet</button>
+      <button type="button" class="chip" data-val="cement" onclick="toggleChip(this)">Cement</button>
+      <button type="button" class="chip" data-val="otherSteel" onclick="toggleChip(this)">TMT Steel</button>
+    </div>
+    <label>Requirement details / quantity</label>
+    <textarea id="f_reqDetails" placeholder="e.g. 40 MT TMT bars, 300 sheets EcoShine roofing, approx timeline"></textarea>
+
+    <div class="section-title">Contractor at site (if any)</div>
+    <label>Contractor name</label>
+    <input type="text" id="f_contName" list="contNameList" placeholder="Name" oninput="autofillContractorByName()">
+    <datalist id="contNameList"></datalist>
+    <label>Contractor contact number <span style="text-transform:none;font-weight:400;">(existing contractor? just pick from list)</span></label>
+    <input type="tel" id="f_contContact" list="contContactList" inputmode="numeric" placeholder="10-digit mobile number" oninput="autofillContractorByContact()">
+    <datalist id="contContactList"></datalist>
+    <label>Contractor type</label>
+    <div class="seg" id="f_contType">
+      <button type="button" class="seg-btn" data-val="centring" onclick="pickSeg('f_contType',this)">Centring</button>
+      <button type="button" class="seg-btn" data-val="fabricator" onclick="pickSeg('f_contType',this)">Fabricator</button>
+      <button type="button" class="seg-btn" data-val="other" onclick="pickSeg('f_contType',this)">Other</button>
+    </div>
+
+    <label>Notes</label>
+    <textarea id="f_notes" placeholder="Anything else worth remembering"></textarea>
+
+    <button class="btn-primary" style="margin-top:22px;" id="submitBtn" onclick="submitVisit()">Save Visit</button>
+    <button class="icon-btn hidden" id="cancelEditBtn" style="display:block;margin:8px auto 0;" onclick="cancelEditVisit()">Cancel edit</button>
+    <div id="submitMsg" style="text-align:center;font-size:12.5px;color:var(--text-muted);margin-top:10px;"></div>
+
+    <div class="section-title" style="margin-top:32px;">Your recent visits</div>
+    <div id="myRecentList" style="margin-top:10px;"></div>
+  </div>
+</div>
+
+<!-- ===================== ADMIN VIEW ===================== -->
+<div id="adminView" class="hidden">
+  <div class="topbar">
+    <div class="brand">Mayur Traders <span>CRM</span><small>Admin dashboard</small></div>
+    <button class="logout" onclick="logout()">Log out</button>
+  </div>
+  <div class="wrap">
+    <div class="corrugate"></div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="dash" onclick="switchTab('dash')">📊<br>Dashboard</button>
+      <button class="tab-btn" data-tab="visits" onclick="switchTab('visits')">🧾<br>Visits</button>
+      <button class="tab-btn" data-tab="customers" onclick="switchTab('customers')">👤<br>Customers</button>
+      <button class="tab-btn" data-tab="contractors" onclick="switchTab('contractors')">🏗️<br>Contractors</button>
+      <button class="tab-btn" data-tab="users" onclick="switchTab('users')">👥<br>Users</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="tab-dash" class="tab-pane">
+      <div class="stat-grid" id="statGrid"></div>
+      <div class="section-title">Latest visits</div>
+      <div id="dashRecentVisits" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- VISITS -->
+    <div id="tab-visits" class="tab-pane hidden">
+      <div class="filter-row">
+        <input type="text" id="v_search" placeholder="Search customer / contractor..." oninput="renderVisits()">
+        <select id="v_status" onchange="renderVisits()">
+          <option value="">All statuses</option>
+          <option value="new">New</option>
+          <option value="contacted">Contacted</option>
+          <option value="quoted">Quoted</option>
+          <option value="won">Won</option>
+          <option value="lost">Lost</option>
+        </select>
+        <select id="v_size" onchange="renderVisits()">
+          <option value="">All sizes</option>
+          <option value="small">Small</option>
+          <option value="mid">Mid</option>
+          <option value="large">Large</option>
+        </select>
+      </div>
+      <div id="visitsList"></div>
+    </div>
+
+    <!-- CUSTOMERS -->
+    <div id="tab-customers" class="tab-pane hidden">
+      <div class="filter-row">
+        <input type="text" id="c_search" placeholder="Search customers..." oninput="renderCustomers()">
+      </div>
+      <div id="customersList"></div>
+    </div>
+
+    <!-- CONTRACTORS -->
+    <div id="tab-contractors" class="tab-pane hidden">
+      <button class="btn-primary" style="margin-bottom:14px;" onclick="openAddContractor()">+ Add Contractor</button>
+      <div class="filter-row">
+        <input type="text" id="k_search" placeholder="Search contractors..." oninput="renderContractors()">
+        <select id="k_type" onchange="renderContractors()">
+          <option value="">All types</option>
+          <option value="centring">Centring</option>
+          <option value="fabricator">Fabricator</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div id="contractorsList"></div>
+    </div>
+
+    <!-- USERS -->
+    <div id="tab-users" class="tab-pane hidden">
+      <button class="btn-primary" style="margin-bottom:14px;" onclick="openAddUser()">+ Add Field User</button>
+      <div id="usersList"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<div id="modalOverlay" class="modal-overlay hidden" onclick="if(event.target===this) closeModal()">
+  <div class="modal-card" id="modalCard"></div>
+</div>
+
+<script>
+/* =======================================================
+   CONFIG — EDIT THESE BEFORE USE
+   ======================================================= */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCoBmiLNKNw-nqgh2jNVAazapSdHFrzvB0",
+  authDomain: "dailysheet-d94c3.firebaseapp.com",
+  databaseURL: "https://dailysheet-d94c3-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "dailysheet-d94c3",
+  storageBucket: "dailysheet-d94c3.firebasestorage.app",
+  messagingSenderId: "702796241388",
+  appId: "1:702796241388:web:6fefe10ffc928bdd3588c9"
+};
+const ADMIN_PIN = "9999";
+/* ======================================================= */
+
+let db = null;
+let currentRole = null;
+let trialMode = false;
+let selectedSeg = { f_projectSize: null, f_contType: null };
+let selectedChips = new Set();
+let currentFieldUser = null; // {id, name, password}
+let editingVisitId = null;
+
+let allVisits = [];
+let allCustomers = [];
+let allContractors = [];
+let allUsers = [];
+let myRecentVisitsCache = [];
+
+function isConfigured(){
+  return FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith("PASTE_");
+}
+function serverTs(){
+  return trialMode ? Date.now() : firebase.database.ServerValue.TIMESTAMP;
+}
+function fakeTimestamp(date){
+  return { toDate: () => date };
+}
+function wrapTs(raw){
+  if(raw && typeof raw === 'object' && raw.toDate) return raw;
+  if(typeof raw === 'number') return { toDate: () => new Date(raw) };
+  return null;
+}
+
+/* ---------- adapter over Firebase Realtime Database (same interface as LocalDB below) ---------- */
+class RealtimeDBAdapter{
+  constructor(rtdb){ this.rtdb = rtdb; }
+  _rowsOf(name, snapVal){
+    if(!snapVal) return [];
+    return Object.keys(snapVal).map(id => {
+      const r = { id, ...snapVal[id] };
+      if(r.createdAt !== undefined) r.createdAt = wrapTs(r.createdAt);
+      return r;
+    });
+  }
+  _sorted(rows){
+    return rows.sort((a,b)=>{
+      const at = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : 0;
+      const bt = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : 0;
+      return bt - at;
+    });
+  }
+  collection(name){
+    const self = this;
+    const base = this.rtdb.ref(name);
+    return {
+      add(obj){
+        const newRef = base.push();
+        return newRef.set(obj).then(()=>({id:newRef.key}));
+      },
+      where(field, op, val){
+        return { limit(n){ return { get(){
+          return base.orderByChild(field).equalTo(val).limitToFirst(n).once('value').then(snap=>{
+            const rows = self._rowsOf(name, snap.val());
+            return {
+              empty: rows.length===0,
+              docs: rows.map(r=>({id:r.id, data:()=>r, ref:{update:(u)=>base.child(r.id).update(u)}}))
+            };
+          });
+        }};}};
+      },
+      doc(id){
+        return { update: (u)=>base.child(id).update(u), delete: ()=>base.child(id).remove() };
+      },
+      orderBy(){
+        return {
+          limit(n){ return { get(){
+            return base.once('value').then(snap=>{
+              const rows = self._sorted(self._rowsOf(name, snap.val())).slice(0,n);
+              return { docs: rows.map(r=>({id:r.id, data:()=>r})) };
+            });
+          }};},
+          onSnapshot(cb){
+            base.on('value', snap=>{
+              const rows = self._sorted(self._rowsOf(name, snap.val()));
+              cb({ docs: rows.map(r=>({id:r.id, data:()=>r})) });
+            });
+            return () => base.off('value');
+          }
+        };
+      }
+    };
+  }
+}
+
+/* ---------- lightweight local "database" for trial mode (browser-only, no sync) ---------- */
+class LocalDB{
+  constructor(){
+    this.data = {};
+    this.listeners = {};
+    ['crm_visits','crm_customers','crm_contractors','crm_users'].forEach(name=>{
+      const raw = localStorage.getItem('localdb_'+name);
+      this.data[name] = raw ? JSON.parse(raw).map(d=>({...d, createdAt: d.createdAt ? fakeTimestamp(new Date(d.createdAt)) : null})) : [];
+    });
+  }
+  _persist(name){
+    const arr = this.data[name].map(d=>{
+      const copy = {...d};
+      if(copy.createdAt && copy.createdAt.toDate) copy.createdAt = copy.createdAt.toDate().toISOString();
+      return copy;
+    });
+    localStorage.setItem('localdb_'+name, JSON.stringify(arr));
+  }
+  _sorted(name){
+    return [...this.data[name]].sort((a,b)=>{
+      const at = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : 0;
+      const bt = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : 0;
+      return bt - at;
+    });
+  }
+  _notify(name){
+    (this.listeners[name]||[]).forEach(cb=>{
+      cb({ docs: this._sorted(name).map(r=>({id:r.id, data:()=>r})) });
+    });
+  }
+  _update(name, id, updates){
+    const rec = this.data[name].find(d=>d.id===id);
+    if(rec) Object.assign(rec, updates);
+    this._persist(name);
+    this._notify(name);
+    return Promise.resolve();
+  }
+  _delete(name, id){
+    this.data[name] = this.data[name].filter(d=>d.id!==id);
+    this._persist(name);
+    this._notify(name);
+    return Promise.resolve();
+  }
+  collection(name){
+    const self = this;
+    return {
+      add(obj){
+        const id = 'id_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+        self.data[name].push({...obj, id});
+        self._persist(name);
+        self._notify(name);
+        return Promise.resolve({id});
+      },
+      where(field, op, val){
+        return { limit(n){ return { get(){
+          const results = self.data[name].filter(d=>d[field]===val).slice(0,n);
+          return Promise.resolve({
+            empty: results.length===0,
+            docs: results.map(r=>({id:r.id, data:()=>r, ref:{update:(u)=>self._update(name,r.id,u)}}))
+          });
+        }};}};
+      },
+      doc(id){
+        return { update: (u)=>self._update(name,id,u), delete: ()=>self._delete(name,id) };
+      },
+      orderBy(){
+        return {
+          limit(n){ return { get(){
+            return Promise.resolve({ docs: self._sorted(name).slice(0,n).map(r=>({id:r.id, data:()=>r})) });
+          }};},
+          onSnapshot(cb){
+            self.listeners[name] = self.listeners[name] || [];
+            self.listeners[name].push(cb);
+            self._notify(name);
+            return () => {};
+          }
+        };
+      }
+    };
+  }
+}
+
+window.onload = function(){
+  if(isConfigured()){
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = new RealtimeDBAdapter(firebase.database());
+  } else {
+    trialMode = true;
+    db = new LocalDB();
+    document.getElementById('trialBanner').classList.remove('hidden');
+  }
+  document.getElementById('loginScreen').classList.remove('hidden');
+};
+
+/* ---------- login ---------- */
+function backToRolePick(){
+  document.getElementById('adminPinBox').classList.add('hidden');
+  document.getElementById('fieldLoginBox').classList.add('hidden');
+  document.getElementById('rolePick').classList.remove('hidden');
+  currentRole = null;
+}
+async function selectRole(role){
+  currentRole = role;
+  document.getElementById('rolePick').classList.add('hidden');
+  if(role === 'admin'){
+    document.getElementById('adminPinBox').classList.remove('hidden');
+    document.getElementById('adminPinInput').focus();
+    return;
+  }
+  document.getElementById('fieldLoginBox').classList.remove('hidden');
+  const selectEl = document.getElementById('fieldUserSelect');
+  selectEl.innerHTML = '<option>Loading...</option>';
+  try{
+    const snap = await db.collection('crm_users').orderBy().limit(200).get();
+    const users = snap.docs.map(d=>({id:d.id, ...d.data()})).filter(u=>u.active !== false);
+    if(!users.length){
+      document.getElementById('fieldNoUsersMsg').classList.remove('hidden');
+      document.getElementById('fieldLoginFields').classList.add('hidden');
+      return;
+    }
+    document.getElementById('fieldNoUsersMsg').classList.add('hidden');
+    document.getElementById('fieldLoginFields').classList.remove('hidden');
+    selectEl.innerHTML = users.map(u=>`<option value="${u.id}">${escAttr(u.name)}</option>`).join('');
+    window._loginUsers = users;
+  }catch(e){
+    selectEl.innerHTML = '<option>Could not load users</option>';
+  }
+}
+function checkAdminPin(){
+  const val = document.getElementById('adminPinInput').value;
+  if(val !== ADMIN_PIN){
+    document.getElementById('adminPinError').textContent = 'Incorrect PIN. Try again.';
+    return;
+  }
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('adminView').classList.remove('hidden');
+  startAdminListeners();
+}
+function checkFieldLogin(){
+  const userId = document.getElementById('fieldUserSelect').value;
+  const pass = document.getElementById('fieldPasswordInput').value;
+  const user = (window._loginUsers||[]).find(u=>u.id===userId);
+  if(!user || user.password !== pass){
+    document.getElementById('fieldLoginError').textContent = 'Incorrect password. Try again.';
+    return;
+  }
+  currentFieldUser = user;
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('fieldView').classList.remove('hidden');
+  document.getElementById('loggedInUserName').textContent = user.name;
+  loadMyRecentVisits();
+  startFieldLookups();
+}
+function logout(){
+  document.getElementById('fieldView').classList.add('hidden');
+  document.getElementById('adminView').classList.add('hidden');
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('rolePick').classList.remove('hidden');
+  document.getElementById('adminPinBox').classList.add('hidden');
+  document.getElementById('fieldLoginBox').classList.add('hidden');
+  document.getElementById('adminPinInput').value = '';
+  document.getElementById('adminPinError').textContent = '';
+  document.getElementById('fieldPasswordInput').value = '';
+  document.getElementById('fieldLoginError').textContent = '';
+  currentRole = null;
+  currentFieldUser = null;
+  editingVisitId = null;
+}
+
+/* ---------- modal helper ---------- */
+function openModal(html){
+  document.getElementById('modalCard').innerHTML = html;
+  document.getElementById('modalOverlay').classList.remove('hidden');
+}
+function closeModal(){
+  document.getElementById('modalOverlay').classList.add('hidden');
+  document.getElementById('modalCard').innerHTML = '';
+}
+
+/* ---------- change password (field user) ---------- */
+function openChangePassword(){
+  openModal(`
+    <h3>Change Password</h3>
+    <label>Current password</label>
+    <input type="password" id="cp_current">
+    <label>New password</label>
+    <input type="password" id="cp_new">
+    <label>Confirm new password</label>
+    <input type="password" id="cp_confirm">
+    <div id="cp_error" style="color:#e03131;font-size:12.5px;margin-top:8px;"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="submitChangePassword()">Save</button>
+    </div>
+  `);
+}
+async function submitChangePassword(){
+  const cur = document.getElementById('cp_current').value;
+  const nw = document.getElementById('cp_new').value;
+  const cf = document.getElementById('cp_confirm').value;
+  const errEl = document.getElementById('cp_error');
+  if(cur !== currentFieldUser.password){ errEl.textContent = 'Current password is incorrect.'; return; }
+  if(!nw || nw.length < 4){ errEl.textContent = 'New password should be at least 4 characters.'; return; }
+  if(nw !== cf){ errEl.textContent = 'New passwords do not match.'; return; }
+  await db.collection('crm_users').doc(currentFieldUser.id).update({password: nw});
+  currentFieldUser.password = nw;
+  closeModal();
+  showToast('Password updated ✓');
+}
+
+/* ---------- field entry helpers ---------- */
+function pickSeg(groupId, btn){
+  const group = document.getElementById(groupId);
+  [...group.children].forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  selectedSeg[groupId] = btn.dataset.val;
+}
+function toggleChip(btn){
+  btn.classList.toggle('active');
+  const val = btn.dataset.val;
+  if(selectedChips.has(val)) selectedChips.delete(val);
+  else selectedChips.add(val);
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  setTimeout(()=>t.classList.add('hidden'), 2200);
+}
+function clean(s){ return (s||'').toString().trim(); }
+function digitsOnly(s){ return clean(s).replace(/\D/g,''); }
+
+async function findOrCreateCustomer(name, contact, address){
+  contact = digitsOnly(contact);
+  if(contact){
+    const snap = await db.collection('crm_customers').where('contact','==',contact).limit(1).get();
+    if(!snap.empty){
+      const doc = snap.docs[0];
+      const updates = {};
+      if(name && name !== doc.data().name) updates.name = name;
+      if(address && address !== doc.data().address) updates.address = address;
+      if(Object.keys(updates).length) await doc.ref.update(updates);
+      return doc.id;
+    }
+  }
+  const ref = await db.collection('crm_customers').add({
+    name: name || 'Unknown', contact, address: address || '',
+    createdAt: serverTs()
+  });
+  return ref.id;
+}
+async function findOrCreateContractor(name, contact, type){
+  name = clean(name); contact = digitsOnly(contact);
+  if(!name && !contact) return null;
+  if(contact){
+    const snap = await db.collection('crm_contractors').where('contact','==',contact).limit(1).get();
+    if(!snap.empty){
+      const doc = snap.docs[0];
+      const updates = {};
+      if(name && name !== doc.data().name) updates.name = name;
+      if(type && type !== doc.data().type) updates.type = type;
+      if(Object.keys(updates).length) await doc.ref.update(updates);
+      return doc.id;
+    }
+  }
+  const ref = await db.collection('crm_contractors').add({
+    name: name || 'Unknown', contact, type: type || 'other',
+    createdAt: serverTs()
+  });
+  return ref.id;
+}
+
+async function submitVisit(){
+  const custName = clean(document.getElementById('f_custName').value);
+  const custContact = digitsOnly(document.getElementById('f_custContact').value);
+  const custAddress = clean(document.getElementById('f_custAddress').value);
+  const siteLocation = clean(document.getElementById('f_siteLocation').value);
+  const projectSize = selectedSeg.f_projectSize;
+  const reqDetails = clean(document.getElementById('f_reqDetails').value);
+  const contName = clean(document.getElementById('f_contName').value);
+  const contContact = digitsOnly(document.getElementById('f_contContact').value);
+  const contType = selectedSeg.f_contType;
+  const notes = clean(document.getElementById('f_notes').value);
+  const msgEl = document.getElementById('submitMsg');
+
+  if(!custName || !custContact){
+    msgEl.style.color = '#e03131';
+    msgEl.textContent = 'Customer name and contact number are required.';
+    return;
+  }
+  if(custContact.length < 10){
+    msgEl.style.color = '#e03131';
+    msgEl.textContent = 'Enter a valid 10-digit contact number.';
+    return;
+  }
+
+  msgEl.style.color = 'var(--text-muted)';
+  msgEl.textContent = 'Saving...';
+
+  try{
+    const customerId = await findOrCreateCustomer(custName, custContact, custAddress);
+    const contractorId = await findOrCreateContractor(contName, contContact, contType);
+
+    const payload = {
+      enteredBy: currentFieldUser.name, enteredByUserId: currentFieldUser.id,
+      customerId, customerName: custName, customerContact: custContact, customerAddress: custAddress,
+      siteLocation, projectSize: projectSize || '', requirements: [...selectedChips], reqDetails,
+      contractorId, contractorName: contName, contractorContact: contContact, contractorType: contType || '',
+      notes
+    };
+
+    if(editingVisitId){
+      await db.collection('crm_visits').doc(editingVisitId).update(payload);
+      showToast('Visit updated ✓');
+      editingVisitId = null;
+      document.getElementById('submitBtn').textContent = 'Save Visit';
+      document.getElementById('cancelEditBtn').classList.add('hidden');
+      document.getElementById('fieldFormTitle').textContent = 'New Site Visit';
+    } else {
+      payload.status = 'new';
+      payload.createdAt = serverTs();
+      await db.collection('crm_visits').add(payload);
+      showToast('Visit saved ✓');
+    }
+
+    resetFieldForm();
+    loadMyRecentVisits();
+  }catch(e){
+    msgEl.style.color = '#e03131';
+    msgEl.textContent = 'Error saving — check connection. ' + e.message;
+  }
+}
+
+function resetFieldForm(){
+  ['f_custName','f_custContact','f_custAddress','f_siteLocation','f_reqDetails','f_contName','f_contContact','f_notes'].forEach(id=>{
+    document.getElementById(id).value = '';
+  });
+  document.querySelectorAll('#f_projectSize .seg-btn, #f_contType .seg-btn, #f_requirements .chip').forEach(b=>b.classList.remove('active'));
+  selectedSeg.f_projectSize = null;
+  selectedSeg.f_contType = null;
+  selectedChips.clear();
+  document.getElementById('submitMsg').textContent = '';
+}
+
+function cancelEditVisit(){
+  editingVisitId = null;
+  resetFieldForm();
+  document.getElementById('submitBtn').textContent = 'Save Visit';
+  document.getElementById('cancelEditBtn').classList.add('hidden');
+  document.getElementById('fieldFormTitle').textContent = 'New Site Visit';
+}
+
+function editMyVisit(id){
+  const v = myRecentVisitsCache.find(x=>x.id===id);
+  if(!v) return;
+  editingVisitId = id;
+  document.getElementById('f_custName').value = v.customerName || '';
+  document.getElementById('f_custContact').value = v.customerContact || '';
+  document.getElementById('f_custAddress').value = v.customerAddress || '';
+  document.getElementById('f_siteLocation').value = v.siteLocation || '';
+  document.getElementById('f_reqDetails').value = v.reqDetails || '';
+  document.getElementById('f_contName').value = v.contractorName || '';
+  document.getElementById('f_contContact').value = v.contractorContact || '';
+  document.getElementById('f_notes').value = v.notes || '';
+  if(v.projectSize) pickSegByValue('f_projectSize', v.projectSize);
+  if(v.contractorType) pickSegByValue('f_contType', v.contractorType);
+  selectedChips = new Set(v.requirements||[]);
+  document.querySelectorAll('#f_requirements .chip').forEach(b=>{
+    b.classList.toggle('active', selectedChips.has(b.dataset.val));
+  });
+  document.getElementById('submitBtn').textContent = 'Update Visit';
+  document.getElementById('cancelEditBtn').classList.remove('hidden');
+  document.getElementById('fieldFormTitle').textContent = 'Edit Site Visit';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+async function loadMyRecentVisits(){
+  const listEl = document.getElementById('myRecentList');
+  listEl.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Loading...</p>';
+  try{
+    const snap = await db.collection('crm_visits').orderBy('createdAt','desc').limit(30).get();
+    let docs = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    docs = docs.filter(v => v.enteredByUserId ? v.enteredByUserId === currentFieldUser.id : v.enteredBy === currentFieldUser.name);
+    docs = docs.slice(0,10);
+    myRecentVisitsCache = docs;
+    if(!docs.length){
+      listEl.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">No visits yet — the first one you save will show here.</p>';
+      return;
+    }
+    listEl.innerHTML = docs.map(v => `
+      <div class="recent-item">
+        <div class="rname">${v.customerName}</div>
+        <div class="rmeta">${v.projectSize ? v.projectSize.toUpperCase()+' · ' : ''}${(v.requirements||[]).join(', ') || 'No requirement tagged'}</div>
+        <button class="icon-btn" style="padding:6px 0 0;" onclick="editMyVisit('${v.id}')">Edit</button>
+      </div>
+    `).join('');
+  }catch(e){
+    listEl.innerHTML = '<p style="color:#e03131;font-size:13px;">Could not load recent visits.</p>';
+  }
+}
+
+/* ---------- field lookups: dropdown/autofill for customers, contractors, site locations ---------- */
+let fieldCustomers = [];
+let fieldContractors = [];
+let fieldSiteLocations = [];
+
+function startFieldLookups(){
+  db.collection('crm_customers').orderBy().onSnapshot(snap=>{
+    fieldCustomers = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    const nameList = document.getElementById('custNameList');
+    const contactList = document.getElementById('custContactList');
+    nameList.innerHTML = fieldCustomers.map(c=>`<option value="${escAttr(c.name)}">${escAttr(c.contact||'')}</option>`).join('');
+    contactList.innerHTML = fieldCustomers.map(c=>`<option value="${escAttr(c.contact||'')}">${escAttr(c.name)}</option>`).join('');
+  });
+  db.collection('crm_contractors').orderBy().onSnapshot(snap=>{
+    fieldContractors = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    const nameList = document.getElementById('contNameList');
+    const contactList = document.getElementById('contContactList');
+    nameList.innerHTML = fieldContractors.map(c=>`<option value="${escAttr(c.name)}">${escAttr(c.contact||'')} · ${escAttr(c.type||'')}</option>`).join('');
+    contactList.innerHTML = fieldContractors.map(c=>`<option value="${escAttr(c.contact||'')}">${escAttr(c.name)} · ${escAttr(c.type||'')}</option>`).join('');
+  });
+  db.collection('crm_visits').orderBy().onSnapshot(snap=>{
+    const locs = new Set();
+    snap.docs.forEach(d=>{ const v = d.data(); if(v.siteLocation) locs.add(v.siteLocation); });
+    fieldSiteLocations = [...locs];
+    document.getElementById('siteLocationList').innerHTML = fieldSiteLocations.map(l=>`<option value="${escAttr(l)}"></option>`).join('');
+  });
+}
+function escAttr(s){ return (s||'').toString().replace(/"/g,'&quot;'); }
+
+function autofillCustomerByContact(){
+  const val = digitsOnly(document.getElementById('f_custContact').value);
+  const match = fieldCustomers.find(c=>c.contact === val);
+  if(match){
+    document.getElementById('f_custName').value = match.name || '';
+    document.getElementById('f_custAddress').value = match.address || '';
+  }
+}
+function autofillCustomerByName(){
+  const val = clean(document.getElementById('f_custName').value);
+  const match = fieldCustomers.find(c=>c.name === val);
+  if(match){
+    document.getElementById('f_custContact').value = match.contact || '';
+    document.getElementById('f_custAddress').value = match.address || '';
+  }
+}
+function autofillContractorByContact(){
+  const val = digitsOnly(document.getElementById('f_contContact').value);
+  const match = fieldContractors.find(c=>c.contact === val);
+  if(match){
+    document.getElementById('f_contName').value = match.name || '';
+    if(match.type) pickSegByValue('f_contType', match.type);
+  }
+}
+function autofillContractorByName(){
+  const val = clean(document.getElementById('f_contName').value);
+  const match = fieldContractors.find(c=>c.name === val);
+  if(match){
+    document.getElementById('f_contContact').value = match.contact || '';
+    if(match.type) pickSegByValue('f_contType', match.type);
+  }
+}
+function pickSegByValue(groupId, val){
+  const group = document.getElementById(groupId);
+  [...group.children].forEach(c=>{
+    c.classList.toggle('active', c.dataset.val === val);
+  });
+  selectedSeg[groupId] = val;
+}
+
+/* ---------- admin ---------- */
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.add('hidden'));
+  document.getElementById('tab-'+tab).classList.remove('hidden');
+}
+
+function startAdminListeners(){
+  db.collection('crm_visits').orderBy('createdAt','desc').onSnapshot(snap=>{
+    allVisits = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    renderDashboard(); renderVisits();
+  });
+  db.collection('crm_customers').orderBy('createdAt','desc').onSnapshot(snap=>{
+    allCustomers = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    renderCustomers();
+  });
+  db.collection('crm_contractors').orderBy('createdAt','desc').onSnapshot(snap=>{
+    allContractors = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    renderContractors();
+  });
+  db.collection('crm_users').orderBy('createdAt','desc').onSnapshot(snap=>{
+    allUsers = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    renderUsers();
+  });
+}
+
+function reqLabel(r){
+  return {structuralSteel:'Structural Steel', roofingSheet:'Roofing Sheet', cement:'Cement', otherSteel:'TMT Steel'}[r] || r;
+}
+function statusBadge(status){
+  const s = status || 'new';
+  return `<span class="badge badge-${s}">${s}</span>`;
+}
+function sizeTag(size){
+  if(!size) return '';
+  return `<span class="size-tag size-${size}">${size}</span>`;
+}
+function fmtDate(ts){
+  if(!ts || !ts.toDate) return '';
+  const d = ts.toDate();
+  return d.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) + ' · ' + d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+
+function renderDashboard(){
+  const total = allVisits.length;
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7*24*60*60*1000);
+  const thisWeek = allVisits.filter(v => v.createdAt && v.createdAt.toDate && v.createdAt.toDate() > weekAgo).length;
+  const won = allVisits.filter(v=>v.status==='won').length;
+  const openLeads = allVisits.filter(v=>['new','contacted','quoted'].includes(v.status||'new')).length;
+  const large = allVisits.filter(v=>v.projectSize==='large').length;
+
+  document.getElementById('statGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Total Visits</div></div>
+    <div class="stat-card"><div class="stat-num">${thisWeek}</div><div class="stat-label">This Week</div></div>
+    <div class="stat-card"><div class="stat-num">${openLeads}</div><div class="stat-label">Open Leads</div></div>
+    <div class="stat-card"><div class="stat-num">${won}</div><div class="stat-label">Won</div></div>
+    <div class="stat-card"><div class="stat-num">${large}</div><div class="stat-label">Large Projects</div></div>
+    <div class="stat-card"><div class="stat-num">${allCustomers.length}</div><div class="stat-label">Customers</div></div>
+    <div class="stat-card"><div class="stat-num">${allContractors.length}</div><div class="stat-label">Contractors</div></div>
+  `;
+
+  const recent = allVisits.slice(0,5);
+  document.getElementById('dashRecentVisits').innerHTML = recent.length ? recent.map(visitCardHtml).join('') :
+    `<div class="empty-state"><h3>No visits yet</h3><p>Once your field team submits visits, they'll appear here.</p></div>`;
+  attachVisitActionHandlers();
+}
+
+function visitCardHtml(v){
+  const reqs = (v.requirements||[]).map(r=>`<span class="req-tag">${reqLabel(r)}</span>`).join('');
+  return `
+    <div class="item-card" data-id="${v.id}">
+      <div class="item-top">
+        <div>
+          <div class="item-title">${v.customerName || 'Unknown'} ${sizeTag(v.projectSize)}</div>
+          <div class="item-sub">${v.siteLocation || ''} ${v.siteLocation && v.customerContact ? '·' : ''} ${v.customerContact || ''}</div>
+        </div>
+        ${statusBadge(v.status)}
+      </div>
+      <div class="item-body">
+        ${reqs || '<span style="color:var(--text-muted);">No requirement tagged</span>'}
+        ${v.reqDetails ? `<div style="margin-top:6px;">${v.reqDetails}</div>` : ''}
+        ${v.contractorName ? `<div style="margin-top:6px;"><b>Contractor:</b> ${v.contractorName} (${v.contractorType||'—'}) ${v.contractorContact||''}</div>` : ''}
+        ${v.notes ? `<div style="margin-top:6px;"><b>Notes:</b> ${v.notes}</div>` : ''}
+        <div style="margin-top:8px;font-size:11.5px;">By ${v.enteredBy||'—'} · ${fmtDate(v.createdAt)}</div>
+      </div>
+      <div class="item-actions">
+        <select class="status-select" data-id="${v.id}">
+          <option value="new" ${v.status==='new'?'selected':''}>New</option>
+          <option value="contacted" ${v.status==='contacted'?'selected':''}>Contacted</option>
+          <option value="quoted" ${v.status==='quoted'?'selected':''}>Quoted</option>
+          <option value="won" ${v.status==='won'?'selected':''}>Won</option>
+          <option value="lost" ${v.status==='lost'?'selected':''}>Lost</option>
+        </select>
+        <button class="btn-sm" onclick="openEditVisit('${v.id}')">Edit</button>
+        <button class="btn-sm btn-danger" onclick="deleteVisit('${v.id}')">Delete</button>
+      </div>
+    </div>
+  `;
+}
+
+function attachVisitActionHandlers(){
+  document.querySelectorAll('.status-select').forEach(sel=>{
+    sel.onchange = async ()=>{
+      await db.collection('crm_visits').doc(sel.dataset.id).update({status: sel.value});
+      showToast('Status updated ✓');
+    };
+  });
+}
+
+function renderVisits(){
+  const search = clean(document.getElementById('v_search').value).toLowerCase();
+  const status = document.getElementById('v_status').value;
+  const size = document.getElementById('v_size').value;
+  let list = allVisits.filter(v=>{
+    if(status && (v.status||'new') !== status) return false;
+    if(size && v.projectSize !== size) return false;
+    if(search){
+      const hay = `${v.customerName} ${v.contractorName} ${v.siteLocation}`.toLowerCase();
+      if(!hay.includes(search)) return false;
+    }
+    return true;
+  });
+  const el = document.getElementById('visitsList');
+  el.innerHTML = list.length ? list.map(visitCardHtml).join('') :
+    `<div class="empty-state"><h3>No visits match</h3><p>Try clearing filters.</p></div>`;
+  attachVisitActionHandlers();
+}
+
+function renderCustomers(){
+  const search = clean(document.getElementById('c_search').value).toLowerCase();
+  let list = allCustomers.filter(c=>{
+    if(!search) return true;
+    return `${c.name} ${c.contact} ${c.address}`.toLowerCase().includes(search);
+  });
+  const el = document.getElementById('customersList');
+  el.innerHTML = list.length ? list.map(c=>{
+    const visitCount = allVisits.filter(v=>v.customerId===c.id).length;
+    return `
+      <div class="item-card">
+        <div class="item-top">
+          <div>
+            <div class="item-title">${c.name}</div>
+            <div class="item-sub">${c.contact || '—'}</div>
+          </div>
+          <span class="req-tag">${visitCount} visit${visitCount===1?'':'s'}</span>
+        </div>
+        ${c.address ? `<div class="item-body">${c.address}</div>` : ''}
+        <div class="item-actions">
+          <button class="btn-sm" onclick="openEditCustomer('${c.id}')">Edit</button>
+          <button class="btn-sm btn-danger" onclick="deleteCustomer('${c.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('') : `<div class="empty-state"><h3>No customers yet</h3><p>They'll be added automatically from site visits.</p></div>`;
+}
+
+function renderContractors(){
+  const search = clean(document.getElementById('k_search').value).toLowerCase();
+  const type = document.getElementById('k_type').value;
+  let list = allContractors.filter(c=>{
+    if(type && c.type !== type) return false;
+    if(!search) return true;
+    return `${c.name} ${c.contact}`.toLowerCase().includes(search);
+  });
+  const el = document.getElementById('contractorsList');
+  el.innerHTML = list.length ? list.map(c=>{
+    const visitCount = allVisits.filter(v=>v.contractorId===c.id).length;
+    return `
+      <div class="item-card">
+        <div class="item-top">
+          <div>
+            <div class="item-title">${c.name}</div>
+            <div class="item-sub">${c.contact || '—'}</div>
+          </div>
+          <span class="req-tag" style="text-transform:capitalize;">${c.type || 'other'}</span>
+        </div>
+        <div class="item-body">Linked to ${visitCount} visit${visitCount===1?'':'s'}</div>
+        <div class="item-actions">
+          <button class="btn-sm" onclick="openEditContractor('${c.id}')">Edit</button>
+          <button class="btn-sm btn-danger" onclick="deleteContractor('${c.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('') : `<div class="empty-state"><h3>No contractors yet</h3><p>They'll be added automatically from site visits.</p></div>`;
+}
+
+/* ---------- admin: edit / delete visits ---------- */
+function openEditVisit(id){
+  const v = allVisits.find(x=>x.id===id);
+  if(!v) return;
+  const reqOptions = [['structuralSteel','Structural Steel'],['roofingSheet','Roofing Sheet'],['cement','Cement'],['otherSteel','TMT Steel']];
+  openModal(`
+    <h3>Edit Visit</h3>
+    <label>Customer name</label><input type="text" id="ev_custName" value="${escAttr(v.customerName)}">
+    <label>Customer contact</label><input type="text" id="ev_custContact" value="${escAttr(v.customerContact)}">
+    <label>Address</label><textarea id="ev_custAddress">${escAttr(v.customerAddress)}</textarea>
+    <label>Site location</label><input type="text" id="ev_siteLocation" value="${escAttr(v.siteLocation)}">
+    <label>Project size</label>
+    <select id="ev_projectSize">
+      <option value="" ${!v.projectSize?'selected':''}>—</option>
+      <option value="small" ${v.projectSize==='small'?'selected':''}>Small</option>
+      <option value="mid" ${v.projectSize==='mid'?'selected':''}>Mid</option>
+      <option value="large" ${v.projectSize==='large'?'selected':''}>Large</option>
+    </select>
+    <label>Requirements</label>
+    <div class="chip-row">${reqOptions.map(([val,label])=>`<label style="display:inline-flex;align-items:center;gap:4px;text-transform:none;font-weight:400;font-size:13px;margin:2px 8px 2px 0;"><input type="checkbox" class="ev_req" value="${val}" style="width:auto;" ${(v.requirements||[]).includes(val)?'checked':''}> ${label}</label>`).join('')}</div>
+    <label>Requirement details</label><textarea id="ev_reqDetails">${escAttr(v.reqDetails)}</textarea>
+    <label>Contractor name</label><input type="text" id="ev_contName" value="${escAttr(v.contractorName)}">
+    <label>Contractor contact</label><input type="text" id="ev_contContact" value="${escAttr(v.contractorContact)}">
+    <label>Contractor type</label>
+    <select id="ev_contType">
+      <option value="" ${!v.contractorType?'selected':''}>—</option>
+      <option value="centring" ${v.contractorType==='centring'?'selected':''}>Centring</option>
+      <option value="fabricator" ${v.contractorType==='fabricator'?'selected':''}>Fabricator</option>
+      <option value="other" ${v.contractorType==='other'?'selected':''}>Other</option>
+    </select>
+    <label>Notes</label><textarea id="ev_notes">${escAttr(v.notes)}</textarea>
+    <label>Status</label>
+    <select id="ev_status">
+      <option value="new" ${v.status==='new'?'selected':''}>New</option>
+      <option value="contacted" ${v.status==='contacted'?'selected':''}>Contacted</option>
+      <option value="quoted" ${v.status==='quoted'?'selected':''}>Quoted</option>
+      <option value="won" ${v.status==='won'?'selected':''}>Won</option>
+      <option value="lost" ${v.status==='lost'?'selected':''}>Lost</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveEditVisit('${id}')">Save</button>
+    </div>
+  `);
+}
+async function saveEditVisit(id){
+  const requirements = [...document.querySelectorAll('.ev_req:checked')].map(el=>el.value);
+  await db.collection('crm_visits').doc(id).update({
+    customerName: clean(document.getElementById('ev_custName').value),
+    customerContact: digitsOnly(document.getElementById('ev_custContact').value),
+    customerAddress: clean(document.getElementById('ev_custAddress').value),
+    siteLocation: clean(document.getElementById('ev_siteLocation').value),
+    projectSize: document.getElementById('ev_projectSize').value,
+    requirements,
+    reqDetails: clean(document.getElementById('ev_reqDetails').value),
+    contractorName: clean(document.getElementById('ev_contName').value),
+    contractorContact: digitsOnly(document.getElementById('ev_contContact').value),
+    contractorType: document.getElementById('ev_contType').value,
+    notes: clean(document.getElementById('ev_notes').value),
+    status: document.getElementById('ev_status').value
+  });
+  closeModal();
+  showToast('Visit updated ✓');
+}
+async function deleteVisit(id){
+  if(!confirm('Delete this visit? This cannot be undone.')) return;
+  await db.collection('crm_visits').doc(id).delete();
+  showToast('Visit deleted');
+}
+
+/* ---------- admin: edit / delete customers ---------- */
+function openEditCustomer(id){
+  const c = allCustomers.find(x=>x.id===id);
+  if(!c) return;
+  openModal(`
+    <h3>Edit Customer</h3>
+    <label>Name</label><input type="text" id="ec_name" value="${escAttr(c.name)}">
+    <label>Contact number</label><input type="text" id="ec_contact" value="${escAttr(c.contact)}">
+    <label>Address</label><textarea id="ec_address">${escAttr(c.address)}</textarea>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveEditCustomer('${id}')">Save</button>
+    </div>
+  `);
+}
+async function saveEditCustomer(id){
+  await db.collection('crm_customers').doc(id).update({
+    name: clean(document.getElementById('ec_name').value),
+    contact: digitsOnly(document.getElementById('ec_contact').value),
+    address: clean(document.getElementById('ec_address').value)
+  });
+  closeModal();
+  showToast('Customer updated ✓');
+}
+async function deleteCustomer(id){
+  if(!confirm('Delete this customer? Their past visits will stay, but this record will be removed.')) return;
+  await db.collection('crm_customers').doc(id).delete();
+  showToast('Customer deleted');
+}
+
+/* ---------- admin: edit / delete contractors ---------- */
+function openEditContractor(id){
+  const c = allContractors.find(x=>x.id===id);
+  if(!c) return;
+  openModal(`
+    <h3>Edit Contractor</h3>
+    <label>Name</label><input type="text" id="ek_name" value="${escAttr(c.name)}">
+    <label>Contact number</label><input type="text" id="ek_contact" value="${escAttr(c.contact)}">
+    <label>Type</label>
+    <select id="ek_type">
+      <option value="centring" ${c.type==='centring'?'selected':''}>Centring</option>
+      <option value="fabricator" ${c.type==='fabricator'?'selected':''}>Fabricator</option>
+      <option value="other" ${c.type==='other'?'selected':''}>Other</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveEditContractor('${id}')">Save</button>
+    </div>
+  `);
+}
+async function saveEditContractor(id){
+  await db.collection('crm_contractors').doc(id).update({
+    name: clean(document.getElementById('ek_name').value),
+    contact: digitsOnly(document.getElementById('ek_contact').value),
+    type: document.getElementById('ek_type').value
+  });
+  closeModal();
+  showToast('Contractor updated ✓');
+}
+async function deleteContractor(id){
+  if(!confirm('Delete this contractor? Their past visits will stay, but this record will be removed.')) return;
+  await db.collection('crm_contractors').doc(id).delete();
+  showToast('Contractor deleted');
+}
+
+/* ---------- admin: add contractor one at a time ---------- */
+function openAddContractor(){
+  openModal(`
+    <h3>Add Contractor</h3>
+    <label>Name</label>
+    <input type="text" id="ac_name" placeholder="e.g. Ramesh Fabricators">
+    <label>Contact number</label>
+    <input type="tel" id="ac_contact" inputmode="numeric" placeholder="10-digit mobile number">
+    <label>Type</label>
+    <div class="seg" id="ac_type">
+      <button type="button" class="seg-btn active" data-val="fabricator" onclick="pickSegByValue('ac_type', 'fabricator')">Fabricator</button>
+      <button type="button" class="seg-btn" data-val="centring" onclick="pickSegByValue('ac_type', 'centring')">Centring</button>
+      <button type="button" class="seg-btn" data-val="other" onclick="pickSegByValue('ac_type', 'other')">Other</button>
+    </div>
+    <div id="ac_error" style="color:#e03131;font-size:12.5px;margin-top:8px;"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveAddContractor()">Add</button>
+    </div>
+  `);
+  selectedSeg.ac_type = 'fabricator';
+}
+async function saveAddContractor(){
+  const name = clean(document.getElementById('ac_name').value);
+  const contact = digitsOnly(document.getElementById('ac_contact').value);
+  const type = selectedSeg.ac_type || 'fabricator';
+  const errEl = document.getElementById('ac_error');
+  if(!name){ errEl.textContent = 'Name is required.'; return; }
+  if(contact.length < 10){ errEl.textContent = 'Enter a valid 10-digit contact number.'; return; }
+  await findOrCreateContractor(name, contact, type);
+  closeModal();
+  showToast('Contractor added ✓');
+}
+
+/* ---------- admin: manage field users ---------- */
+function renderUsers(){
+  const el = document.getElementById('usersList');
+  el.innerHTML = allUsers.length ? allUsers.map(u=>`
+    <div class="user-card">
+      <div>
+        <div class="item-title">${u.name}</div>
+        <div class="item-sub">${u.active !== false ? '<span class="user-badge-active">Active</span>' : '<span class="user-badge-inactive">Inactive</span>'}</div>
+      </div>
+      <div class="item-actions" style="margin-top:0;">
+        <button class="btn-sm" onclick="openEditUser('${u.id}')">Edit</button>
+        <button class="btn-sm btn-danger" onclick="deleteUser('${u.id}')">Delete</button>
+      </div>
+    </div>
+  `).join('') : `<div class="empty-state"><h3>No field users yet</h3><p>Add one so your field team can log in.</p></div>`;
+}
+function openAddUser(){
+  openModal(`
+    <h3>Add Field User</h3>
+    <label>Name</label><input type="text" id="au_name" placeholder="e.g. Swapnil">
+    <label>Initial password</label><input type="text" id="au_password" placeholder="e.g. 1234">
+    <div id="au_error" style="color:#e03131;font-size:12.5px;margin-top:8px;"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveAddUser()">Add</button>
+    </div>
+  `);
+}
+async function saveAddUser(){
+  const name = clean(document.getElementById('au_name').value);
+  const password = document.getElementById('au_password').value;
+  const errEl = document.getElementById('au_error');
+  if(!name || !password){ errEl.textContent = 'Name and password are required.'; return; }
+  await db.collection('crm_users').add({name, password, active: true, createdAt: serverTs()});
+  closeModal();
+  showToast('User added ✓');
+}
+function openEditUser(id){
+  const u = allUsers.find(x=>x.id===id);
+  if(!u) return;
+  openModal(`
+    <h3>Edit User</h3>
+    <label>Name</label><input type="text" id="eu_name" value="${escAttr(u.name)}">
+    <label>Reset password <span style="text-transform:none;font-weight:400;">(leave blank to keep current)</span></label>
+    <input type="text" id="eu_password" placeholder="New password">
+    <label>Status</label>
+    <select id="eu_active">
+      <option value="true" ${u.active!==false?'selected':''}>Active</option>
+      <option value="false" ${u.active===false?'selected':''}>Inactive</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveEditUser('${id}')">Save</button>
+    </div>
+  `);
+}
+async function saveEditUser(id){
+  const updates = {
+    name: clean(document.getElementById('eu_name').value),
+    active: document.getElementById('eu_active').value === 'true'
+  };
+  const newPass = document.getElementById('eu_password').value;
+  if(newPass) updates.password = newPass;
+  await db.collection('crm_users').doc(id).update(updates);
+  closeModal();
+  showToast('User updated ✓');
+}
+async function deleteUser(id){
+  if(!confirm('Delete this user? They will no longer be able to log in.')) return;
+  await db.collection('crm_users').doc(id).delete();
+  showToast('User deleted');
+}
+</script>
+</body>
+</html>
