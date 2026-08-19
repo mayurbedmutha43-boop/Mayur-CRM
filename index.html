@@ -180,7 +180,7 @@
     <h2>Mayur Traders <span style="color:var(--accent)">CRM</span></h2>
     <p style="color:var(--text-muted);font-size:13.5px;">Site visit tracking</p>
     <div id="rolePick" class="role-pick">
-      <button onclick="selectRole('field')">📋<br><span style="font-size:14px;">Field Entry</span></button>
+      <button onclick="selectRole('field')">📋<br><span style="font-size:14px;">Staff Login</span></button>
       <button onclick="selectRole('admin')">📊<br><span style="font-size:14px;">Admin</span></button>
     </div>
 
@@ -228,6 +228,12 @@
       <button class="icon-btn" onclick="openChangePassword()">Change password</button>
     </div>
 
+    <div class="tabs" style="margin-top:14px;">
+      <button class="tab-btn active" data-fieldtab="visit" onclick="switchFieldTab('visit')">🚚<br>Site Visit</button>
+      <button class="tab-btn" data-fieldtab="stock" onclick="switchFieldTab('stock')">📦<br>Stock Follow-up</button>
+    </div>
+
+    <div id="panel-visit">
     <div class="section-title">Customer</div>
     <label>Customer name *</label>
     <input type="text" id="f_custName" list="custNameList" placeholder="Full name" oninput="autofillCustomerByName()">
@@ -282,6 +288,27 @@
 
     <div class="section-title" style="margin-top:32px;">Your recent visits</div>
     <div id="myRecentList" style="margin-top:10px;"></div>
+    </div>
+
+    <div id="panel-stock" class="hidden">
+      <div class="section-title">Customer wants this, but we're out of stock</div>
+      <p style="color:var(--text-muted);font-size:13px;margin-top:2px;">Log it here — once material is ready, Admin/Manager will see it and call the customer.</p>
+
+      <label>Customer name *</label>
+      <input type="text" id="s_custName" list="custNameList" placeholder="Full name" oninput="autofillStockCustomerByName()">
+      <label>Contact number * <span style="text-transform:none;font-weight:400;">(existing customer? just pick from list)</span></label>
+      <input type="tel" id="s_custContact" list="custContactList" inputmode="numeric" placeholder="10-digit mobile number" oninput="autofillStockCustomerByContact()">
+      <label>Item / material needed *</label>
+      <textarea id="s_item" placeholder="e.g. EcoShine Roofing Sheet, 12ft length, 40 nos"></textarea>
+      <label>Notes</label>
+      <textarea id="s_notes" placeholder="Anything else worth remembering"></textarea>
+
+      <button class="btn-primary" style="margin-top:22px;" onclick="submitStockFollowup()">Save Follow-up</button>
+      <div id="stockSubmitMsg" style="text-align:center;font-size:12.5px;color:var(--text-muted);margin-top:10px;"></div>
+
+      <div class="section-title" style="margin-top:32px;">Your recent follow-ups</div>
+      <div id="myStockList" style="margin-top:10px;"></div>
+    </div>
   </div>
 </div>
 
@@ -296,9 +323,10 @@
     <div class="tabs">
       <button class="tab-btn active" data-tab="dash" onclick="switchTab('dash')">📊<br>Dashboard</button>
       <button class="tab-btn" data-tab="visits" onclick="switchTab('visits')">🧾<br>Visits</button>
+      <button class="tab-btn" data-tab="stock" onclick="switchTab('stock')">📦<br>Stock</button>
       <button class="tab-btn" data-tab="customers" onclick="switchTab('customers')">👤<br>Customers</button>
       <button class="tab-btn" data-tab="contractors" onclick="switchTab('contractors')">🏗️<br>Contractors</button>
-      <button class="tab-btn" data-tab="users" onclick="switchTab('users')">👥<br>Users</button>
+      <button class="tab-btn" data-tab="users" id="usersTabBtn" onclick="switchTab('users')">👥<br>Users</button>
     </div>
 
     <!-- DASHBOARD -->
@@ -330,6 +358,21 @@
       <div id="visitsList"></div>
     </div>
 
+    <!-- STOCK FOLLOW-UPS -->
+    <div id="tab-stock" class="tab-pane hidden">
+      <button class="btn-primary" style="margin-bottom:14px;" onclick="openAddStock()">+ Add Follow-up</button>
+      <div class="filter-row">
+        <input type="text" id="st_search" placeholder="Search customer / item..." oninput="renderStock()">
+        <select id="st_status" onchange="renderStock()">
+          <option value="">All statuses</option>
+          <option value="waiting">Waiting</option>
+          <option value="informed">Informed</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
+      <div id="stockList"></div>
+    </div>
+
     <!-- CUSTOMERS -->
     <div id="tab-customers" class="tab-pane hidden">
       <div class="filter-row">
@@ -340,7 +383,7 @@
 
     <!-- CONTRACTORS -->
     <div id="tab-contractors" class="tab-pane hidden">
-      <button class="btn-primary" style="margin-bottom:14px;" onclick="openAddContractor()">+ Add Contractor</button>
+      <button class="btn-primary" id="addContractorBtn" style="margin-bottom:14px;" onclick="openAddContractor()">+ Add Contractor</button>
       <div class="filter-row">
         <input type="text" id="k_search" placeholder="Search contractors..." oninput="renderContractors()">
         <select id="k_type" onchange="renderContractors()">
@@ -387,14 +430,17 @@ let currentRole = null;
 let trialMode = false;
 let selectedSeg = { f_projectSize: null, f_contType: null };
 let selectedChips = new Set();
-let currentFieldUser = null; // {id, name, password}
+let currentFieldUser = null; // {id, name, password, role}
+let currentUserRole = null; // 'admin' | 'manager' | 'field'
 let editingVisitId = null;
 
 let allVisits = [];
 let allCustomers = [];
 let allContractors = [];
 let allUsers = [];
+let allStock = [];
 let myRecentVisitsCache = [];
+let myStockCache = [];
 
 function isConfigured(){
   return FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith("PASTE_");
@@ -477,7 +523,7 @@ class LocalDB{
   constructor(){
     this.data = {};
     this.listeners = {};
-    ['crm_visits','crm_customers','crm_contractors','crm_users'].forEach(name=>{
+    ['crm_visits','crm_customers','crm_contractors','crm_users','crm_stock'].forEach(name=>{
       const raw = localStorage.getItem('localdb_'+name);
       this.data[name] = raw ? JSON.parse(raw).map(d=>({...d, createdAt: d.createdAt ? fakeTimestamp(new Date(d.createdAt)) : null})) : [];
     });
@@ -609,8 +655,10 @@ function checkAdminPin(){
     document.getElementById('adminPinError').textContent = 'Incorrect PIN. Try again.';
     return;
   }
+  currentUserRole = 'admin';
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('adminView').classList.remove('hidden');
+  applyRoleVisibility();
   startAdminListeners();
 }
 function checkFieldLogin(){
@@ -623,10 +671,26 @@ function checkFieldLogin(){
   }
   currentFieldUser = user;
   document.getElementById('loginScreen').classList.add('hidden');
-  document.getElementById('fieldView').classList.remove('hidden');
-  document.getElementById('loggedInUserName').textContent = user.name;
-  loadMyRecentVisits();
-  startFieldLookups();
+  if(user.role === 'manager'){
+    currentUserRole = 'manager';
+    document.getElementById('adminView').classList.remove('hidden');
+    applyRoleVisibility();
+    startAdminListeners();
+  } else {
+    currentUserRole = 'field';
+    document.getElementById('fieldView').classList.remove('hidden');
+    document.getElementById('loggedInUserName').textContent = user.name;
+    loadMyRecentVisits();
+    loadMyStockFollowups();
+    startFieldLookups();
+  }
+}
+function applyRoleVisibility(){
+  const isAdmin = currentUserRole === 'admin';
+  document.getElementById('usersTabBtn').classList.toggle('hidden', !isAdmin);
+  document.getElementById('addContractorBtn').classList.toggle('hidden', !isAdmin);
+  const label = document.querySelector('#adminView .brand small');
+  if(label) label.textContent = isAdmin ? 'Admin dashboard' : `Manager view — ${currentFieldUser ? currentFieldUser.name : ''}`;
 }
 function logout(){
   document.getElementById('fieldView').classList.add('hidden');
@@ -641,8 +705,17 @@ function logout(){
   document.getElementById('fieldLoginError').textContent = '';
   currentRole = null;
   currentFieldUser = null;
+  currentUserRole = null;
   editingVisitId = null;
 }
+
+/* ---------- field view sub-tabs ---------- */
+function switchFieldTab(tab){
+  document.querySelectorAll('#fieldView .tabs .tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.fieldtab===tab));
+  document.getElementById('panel-visit').classList.toggle('hidden', tab!=='visit');
+  document.getElementById('panel-stock').classList.toggle('hidden', tab!=='stock');
+}
+
 
 /* ---------- modal helper ---------- */
 function openModal(html){
@@ -726,8 +799,8 @@ async function findOrCreateCustomer(name, contact, address){
   });
   return ref.id;
 }
-async function findOrCreateContractor(name, contact, type){
-  name = clean(name); contact = digitsOnly(contact);
+async function findOrCreateContractor(name, contact, type, place){
+  name = clean(name); contact = digitsOnly(contact); place = clean(place);
   if(!name && !contact) return null;
   if(contact){
     const snap = await db.collection('crm_contractors').where('contact','==',contact).limit(1).get();
@@ -736,12 +809,13 @@ async function findOrCreateContractor(name, contact, type){
       const updates = {};
       if(name && name !== doc.data().name) updates.name = name;
       if(type && type !== doc.data().type) updates.type = type;
+      if(place && place !== doc.data().place) updates.place = place;
       if(Object.keys(updates).length) await doc.ref.update(updates);
       return doc.id;
     }
   }
   const ref = await db.collection('crm_contractors').add({
-    name: name || 'Unknown', contact, type: type || 'other',
+    name: name || 'Unknown', contact, type: type || 'other', place: place || '',
     createdAt: serverTs()
   });
   return ref.id;
@@ -945,6 +1019,77 @@ function pickSegByValue(groupId, val){
   selectedSeg[groupId] = val;
 }
 
+/* ---------- field: stock follow-ups (out-of-stock walk-in customers) ---------- */
+function autofillStockCustomerByContact(){
+  const val = digitsOnly(document.getElementById('s_custContact').value);
+  const match = fieldCustomers.find(c=>c.contact === val);
+  if(match) document.getElementById('s_custName').value = match.name || '';
+}
+function autofillStockCustomerByName(){
+  const val = clean(document.getElementById('s_custName').value);
+  const match = fieldCustomers.find(c=>c.name === val);
+  if(match) document.getElementById('s_custContact').value = match.contact || '';
+}
+async function submitStockFollowup(){
+  const custName = clean(document.getElementById('s_custName').value);
+  const custContact = digitsOnly(document.getElementById('s_custContact').value);
+  const item = clean(document.getElementById('s_item').value);
+  const notes = clean(document.getElementById('s_notes').value);
+  const msgEl = document.getElementById('stockSubmitMsg');
+
+  if(!custName || !custContact || !item){
+    msgEl.style.color = '#e03131';
+    msgEl.textContent = 'Customer name, contact number, and item needed are required.';
+    return;
+  }
+  if(custContact.length < 10){
+    msgEl.style.color = '#e03131';
+    msgEl.textContent = 'Enter a valid 10-digit contact number.';
+    return;
+  }
+  msgEl.style.color = 'var(--text-muted)';
+  msgEl.textContent = 'Saving...';
+  try{
+    const customerId = await findOrCreateCustomer(custName, custContact, '');
+    await db.collection('crm_stock').add({
+      enteredBy: currentFieldUser.name, enteredByUserId: currentFieldUser.id,
+      customerId, customerName: custName, customerContact: custContact,
+      item, notes, status: 'waiting',
+      createdAt: serverTs()
+    });
+    showToast('Follow-up saved ✓');
+    ['s_custName','s_custContact','s_item','s_notes'].forEach(id=>document.getElementById(id).value = '');
+    msgEl.textContent = '';
+    loadMyStockFollowups();
+  }catch(e){
+    msgEl.style.color = '#e03131';
+    msgEl.textContent = 'Error saving — check connection. ' + e.message;
+  }
+}
+async function loadMyStockFollowups(){
+  const listEl = document.getElementById('myStockList');
+  if(!listEl) return;
+  listEl.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Loading...</p>';
+  try{
+    const snap = await db.collection('crm_stock').orderBy('createdAt','desc').limit(30).get();
+    let docs = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    docs = docs.filter(s => s.enteredByUserId === currentFieldUser.id).slice(0,10);
+    myStockCache = docs;
+    if(!docs.length){
+      listEl.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">No follow-ups yet.</p>';
+      return;
+    }
+    listEl.innerHTML = docs.map(s => `
+      <div class="recent-item">
+        <div class="rname">${s.customerName} ${stockStatusBadge(s.status)}</div>
+        <div class="rmeta">${s.item}</div>
+      </div>
+    `).join('');
+  }catch(e){
+    listEl.innerHTML = '<p style="color:#e03131;font-size:13px;">Could not load follow-ups.</p>';
+  }
+}
+
 /* ---------- admin ---------- */
 function switchTab(tab){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
@@ -965,10 +1110,16 @@ function startAdminListeners(){
     allContractors = snap.docs.map(d=>({id:d.id, ...d.data()}));
     renderContractors();
   });
-  db.collection('crm_users').orderBy('createdAt','desc').onSnapshot(snap=>{
-    allUsers = snap.docs.map(d=>({id:d.id, ...d.data()}));
-    renderUsers();
+  db.collection('crm_stock').orderBy('createdAt','desc').onSnapshot(snap=>{
+    allStock = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    renderDashboard(); renderStock();
   });
+  if(currentUserRole === 'admin'){
+    db.collection('crm_users').orderBy('createdAt','desc').onSnapshot(snap=>{
+      allUsers = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      renderUsers();
+    });
+  }
 }
 
 function reqLabel(r){
@@ -977,6 +1128,11 @@ function reqLabel(r){
 function statusBadge(status){
   const s = status || 'new';
   return `<span class="badge badge-${s}">${s}</span>`;
+}
+function stockStatusBadge(status){
+  const map = { waiting: 'badge-quoted', informed: 'badge-contacted', closed: 'badge-won' };
+  const cls = map[status] || 'badge-new';
+  return `<span class="badge ${cls}">${status || 'waiting'}</span>`;
 }
 function sizeTag(size){
   if(!size) return '';
@@ -996,12 +1152,14 @@ function renderDashboard(){
   const won = allVisits.filter(v=>v.status==='won').length;
   const openLeads = allVisits.filter(v=>['new','contacted','quoted'].includes(v.status||'new')).length;
   const large = allVisits.filter(v=>v.projectSize==='large').length;
+  const waitingStock = allStock.filter(s=>s.status==='waiting').length;
 
   document.getElementById('statGrid').innerHTML = `
     <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Total Visits</div></div>
     <div class="stat-card"><div class="stat-num">${thisWeek}</div><div class="stat-label">This Week</div></div>
     <div class="stat-card"><div class="stat-num">${openLeads}</div><div class="stat-label">Open Leads</div></div>
     <div class="stat-card"><div class="stat-num">${won}</div><div class="stat-label">Won</div></div>
+    <div class="stat-card"><div class="stat-num">${waitingStock}</div><div class="stat-label">Waiting on Stock</div></div>
     <div class="stat-card"><div class="stat-num">${large}</div><div class="stat-label">Large Projects</div></div>
     <div class="stat-card"><div class="stat-num">${allCustomers.length}</div><div class="stat-label">Customers</div></div>
     <div class="stat-card"><div class="stat-num">${allContractors.length}</div><div class="stat-label">Contractors</div></div>
@@ -1039,8 +1197,10 @@ function visitCardHtml(v){
           <option value="won" ${v.status==='won'?'selected':''}>Won</option>
           <option value="lost" ${v.status==='lost'?'selected':''}>Lost</option>
         </select>
+        ${currentUserRole === 'admin' ? `
         <button class="btn-sm" onclick="openEditVisit('${v.id}')">Edit</button>
         <button class="btn-sm btn-danger" onclick="deleteVisit('${v.id}')">Delete</button>
+        ` : ''}
       </div>
     </div>
   `;
@@ -1093,10 +1253,12 @@ function renderCustomers(){
           <span class="req-tag">${visitCount} visit${visitCount===1?'':'s'}</span>
         </div>
         ${c.address ? `<div class="item-body">${c.address}</div>` : ''}
+        ${currentUserRole === 'admin' ? `
         <div class="item-actions">
           <button class="btn-sm" onclick="openEditCustomer('${c.id}')">Edit</button>
           <button class="btn-sm btn-danger" onclick="deleteCustomer('${c.id}')">Delete</button>
         </div>
+        ` : ''}
       </div>
     `;
   }).join('') : `<div class="empty-state"><h3>No customers yet</h3><p>They'll be added automatically from site visits.</p></div>`;
@@ -1108,7 +1270,7 @@ function renderContractors(){
   let list = allContractors.filter(c=>{
     if(type && c.type !== type) return false;
     if(!search) return true;
-    return `${c.name} ${c.contact}`.toLowerCase().includes(search);
+    return `${c.name} ${c.contact} ${c.place||''}`.toLowerCase().includes(search);
   });
   const el = document.getElementById('contractorsList');
   el.innerHTML = list.length ? list.map(c=>{
@@ -1118,18 +1280,138 @@ function renderContractors(){
         <div class="item-top">
           <div>
             <div class="item-title">${c.name}</div>
-            <div class="item-sub">${c.contact || '—'}</div>
+            <div class="item-sub">${c.contact || '—'}${c.place ? ' · '+c.place : ''}</div>
           </div>
           <span class="req-tag" style="text-transform:capitalize;">${c.type || 'other'}</span>
         </div>
         <div class="item-body">Linked to ${visitCount} visit${visitCount===1?'':'s'}</div>
+        ${currentUserRole === 'admin' ? `
         <div class="item-actions">
           <button class="btn-sm" onclick="openEditContractor('${c.id}')">Edit</button>
           <button class="btn-sm btn-danger" onclick="deleteContractor('${c.id}')">Delete</button>
         </div>
+        ` : ''}
       </div>
     `;
   }).join('') : `<div class="empty-state"><h3>No contractors yet</h3><p>They'll be added automatically from site visits.</p></div>`;
+}
+
+/* ---------- stock follow-ups (admin + manager) ---------- */
+function renderStock(){
+  const searchEl = document.getElementById('st_search');
+  const statusEl = document.getElementById('st_status');
+  if(!searchEl || !statusEl) return;
+  const search = clean(searchEl.value).toLowerCase();
+  const status = statusEl.value;
+  let list = allStock.filter(s=>{
+    if(status && (s.status||'waiting') !== status) return false;
+    if(!search) return true;
+    return `${s.customerName} ${s.customerContact} ${s.item}`.toLowerCase().includes(search);
+  });
+  const el = document.getElementById('stockList');
+  if(!el) return;
+  el.innerHTML = list.length ? list.map(s=>`
+    <div class="item-card">
+      <div class="item-top">
+        <div>
+          <div class="item-title">${s.customerName}</div>
+          <div class="item-sub">${s.customerContact || '—'}</div>
+        </div>
+        ${stockStatusBadge(s.status)}
+      </div>
+      <div class="item-body">
+        <b>Needs:</b> ${s.item}
+        ${s.notes ? `<div style="margin-top:6px;"><b>Notes:</b> ${s.notes}</div>` : ''}
+        <div style="margin-top:8px;font-size:11.5px;">By ${s.enteredBy||'—'} · ${fmtDate(s.createdAt)}</div>
+      </div>
+      <div class="item-actions">
+        <select class="stock-status-select" data-id="${s.id}">
+          <option value="waiting" ${s.status==='waiting'?'selected':''}>Waiting</option>
+          <option value="informed" ${s.status==='informed'?'selected':''}>Informed</option>
+          <option value="closed" ${s.status==='closed'?'selected':''}>Closed</option>
+        </select>
+        ${currentUserRole === 'admin' ? `
+        <button class="btn-sm" onclick="openEditStock('${s.id}')">Edit</button>
+        <button class="btn-sm btn-danger" onclick="deleteStock('${s.id}')">Delete</button>
+        ` : ''}
+      </div>
+    </div>
+  `).join('') : `<div class="empty-state"><h3>No stock follow-ups</h3><p>They'll show here once field staff log an out-of-stock request.</p></div>`;
+
+  document.querySelectorAll('.stock-status-select').forEach(sel=>{
+    sel.onchange = async ()=>{
+      await db.collection('crm_stock').doc(sel.dataset.id).update({status: sel.value});
+      showToast('Status updated ✓');
+    };
+  });
+}
+function openAddStock(){
+  openModal(`
+    <h3>Add Stock Follow-up</h3>
+    <label>Customer name</label><input type="text" id="as_name" placeholder="Full name">
+    <label>Contact number</label><input type="tel" id="as_contact" inputmode="numeric" placeholder="10-digit mobile number">
+    <label>Item / material needed</label><textarea id="as_item" placeholder="e.g. EcoShine Roofing Sheet, 12ft, 40 nos"></textarea>
+    <label>Notes</label><textarea id="as_notes"></textarea>
+    <div id="as_error" style="color:#e03131;font-size:12.5px;margin-top:8px;"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveAddStock()">Add</button>
+    </div>
+  `);
+}
+async function saveAddStock(){
+  const name = clean(document.getElementById('as_name').value);
+  const contact = digitsOnly(document.getElementById('as_contact').value);
+  const item = clean(document.getElementById('as_item').value);
+  const notes = clean(document.getElementById('as_notes').value);
+  const errEl = document.getElementById('as_error');
+  if(!name || !item){ errEl.textContent = 'Name and item are required.'; return; }
+  if(contact.length < 10){ errEl.textContent = 'Enter a valid 10-digit contact number.'; return; }
+  const customerId = await findOrCreateCustomer(name, contact, '');
+  await db.collection('crm_stock').add({
+    enteredBy: currentFieldUser ? currentFieldUser.name : 'Admin', enteredByUserId: currentFieldUser ? currentFieldUser.id : null,
+    customerId, customerName: name, customerContact: contact, item, notes, status: 'waiting',
+    createdAt: serverTs()
+  });
+  closeModal();
+  showToast('Follow-up added ✓');
+}
+function openEditStock(id){
+  const s = allStock.find(x=>x.id===id);
+  if(!s) return;
+  openModal(`
+    <h3>Edit Stock Follow-up</h3>
+    <label>Customer name</label><input type="text" id="es_name" value="${escAttr(s.customerName)}">
+    <label>Contact number</label><input type="text" id="es_contact" value="${escAttr(s.customerContact)}">
+    <label>Item / material needed</label><textarea id="es_item">${escAttr(s.item)}</textarea>
+    <label>Notes</label><textarea id="es_notes">${escAttr(s.notes)}</textarea>
+    <label>Status</label>
+    <select id="es_status">
+      <option value="waiting" ${s.status==='waiting'?'selected':''}>Waiting</option>
+      <option value="informed" ${s.status==='informed'?'selected':''}>Informed</option>
+      <option value="closed" ${s.status==='closed'?'selected':''}>Closed</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveEditStock('${id}')">Save</button>
+    </div>
+  `);
+}
+async function saveEditStock(id){
+  await db.collection('crm_stock').doc(id).update({
+    customerName: clean(document.getElementById('es_name').value),
+    customerContact: digitsOnly(document.getElementById('es_contact').value),
+    item: clean(document.getElementById('es_item').value),
+    notes: clean(document.getElementById('es_notes').value),
+    status: document.getElementById('es_status').value
+  });
+  closeModal();
+  showToast('Follow-up updated ✓');
+}
+async function deleteStock(id){
+  if(!confirm('Delete this follow-up?')) return;
+  await db.collection('crm_stock').doc(id).delete();
+  showToast('Follow-up deleted');
 }
 
 /* ---------- admin: edit / delete visits ---------- */
@@ -1240,6 +1522,7 @@ function openEditContractor(id){
     <h3>Edit Contractor</h3>
     <label>Name</label><input type="text" id="ek_name" value="${escAttr(c.name)}">
     <label>Contact number</label><input type="text" id="ek_contact" value="${escAttr(c.contact)}">
+    <label>Place</label><input type="text" id="ek_place" value="${escAttr(c.place)}" placeholder="e.g. Manmad, Chandwad">
     <label>Type</label>
     <select id="ek_type">
       <option value="centring" ${c.type==='centring'?'selected':''}>Centring</option>
@@ -1256,6 +1539,7 @@ async function saveEditContractor(id){
   await db.collection('crm_contractors').doc(id).update({
     name: clean(document.getElementById('ek_name').value),
     contact: digitsOnly(document.getElementById('ek_contact').value),
+    place: clean(document.getElementById('ek_place').value),
     type: document.getElementById('ek_type').value
   });
   closeModal();
@@ -1275,6 +1559,8 @@ function openAddContractor(){
     <input type="text" id="ac_name" placeholder="e.g. Ramesh Fabricators">
     <label>Contact number</label>
     <input type="tel" id="ac_contact" inputmode="numeric" placeholder="10-digit mobile number">
+    <label>Place</label>
+    <input type="text" id="ac_place" placeholder="e.g. Manmad, Chandwad">
     <label>Type</label>
     <div class="seg" id="ac_type">
       <button type="button" class="seg-btn active" data-val="fabricator" onclick="pickSegByValue('ac_type', 'fabricator')">Fabricator</button>
@@ -1292,49 +1578,58 @@ function openAddContractor(){
 async function saveAddContractor(){
   const name = clean(document.getElementById('ac_name').value);
   const contact = digitsOnly(document.getElementById('ac_contact').value);
+  const place = clean(document.getElementById('ac_place').value);
   const type = selectedSeg.ac_type || 'fabricator';
   const errEl = document.getElementById('ac_error');
   if(!name){ errEl.textContent = 'Name is required.'; return; }
   if(contact.length < 10){ errEl.textContent = 'Enter a valid 10-digit contact number.'; return; }
-  await findOrCreateContractor(name, contact, type);
+  await findOrCreateContractor(name, contact, type, place);
   closeModal();
   showToast('Contractor added ✓');
 }
 
-/* ---------- admin: manage field users ---------- */
+/* ---------- admin: manage staff users ---------- */
 function renderUsers(){
   const el = document.getElementById('usersList');
   el.innerHTML = allUsers.length ? allUsers.map(u=>`
     <div class="user-card">
       <div>
         <div class="item-title">${u.name}</div>
-        <div class="item-sub">${u.active !== false ? '<span class="user-badge-active">Active</span>' : '<span class="user-badge-inactive">Inactive</span>'}</div>
+        <div class="item-sub">${u.active !== false ? '<span class="user-badge-active">Active</span>' : '<span class="user-badge-inactive">Inactive</span>'} <span class="req-tag" style="text-transform:capitalize;">${u.role === 'manager' ? 'Manager' : 'Field'}</span></div>
       </div>
       <div class="item-actions" style="margin-top:0;">
         <button class="btn-sm" onclick="openEditUser('${u.id}')">Edit</button>
         <button class="btn-sm btn-danger" onclick="deleteUser('${u.id}')">Delete</button>
       </div>
     </div>
-  `).join('') : `<div class="empty-state"><h3>No field users yet</h3><p>Add one so your field team can log in.</p></div>`;
+  `).join('') : `<div class="empty-state"><h3>No staff users yet</h3><p>Add one so your team can log in.</p></div>`;
 }
 function openAddUser(){
   openModal(`
-    <h3>Add Field User</h3>
+    <h3>Add Staff User</h3>
     <label>Name</label><input type="text" id="au_name" placeholder="e.g. Swapnil">
     <label>Initial password</label><input type="text" id="au_password" placeholder="e.g. 1234">
+    <label>Role</label>
+    <div class="seg" id="au_role">
+      <button type="button" class="seg-btn active" data-val="field" onclick="pickSegByValue('au_role', 'field')">Field</button>
+      <button type="button" class="seg-btn" data-val="manager" onclick="pickSegByValue('au_role', 'manager')">Manager</button>
+    </div>
+    <p style="font-size:12.5px;color:var(--text-muted);margin-top:8px;line-height:1.5;">Field: fills out site visits and stock follow-ups.<br>Manager: sees all visits and follow-ups for tracking, can't edit/delete or manage users.</p>
     <div id="au_error" style="color:#e03131;font-size:12.5px;margin-top:8px;"></div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn-primary" onclick="saveAddUser()">Add</button>
     </div>
   `);
+  selectedSeg.au_role = 'field';
 }
 async function saveAddUser(){
   const name = clean(document.getElementById('au_name').value);
   const password = document.getElementById('au_password').value;
+  const role = selectedSeg.au_role || 'field';
   const errEl = document.getElementById('au_error');
   if(!name || !password){ errEl.textContent = 'Name and password are required.'; return; }
-  await db.collection('crm_users').add({name, password, active: true, createdAt: serverTs()});
+  await db.collection('crm_users').add({name, password, role, active: true, createdAt: serverTs()});
   closeModal();
   showToast('User added ✓');
 }
@@ -1346,6 +1641,11 @@ function openEditUser(id){
     <label>Name</label><input type="text" id="eu_name" value="${escAttr(u.name)}">
     <label>Reset password <span style="text-transform:none;font-weight:400;">(leave blank to keep current)</span></label>
     <input type="text" id="eu_password" placeholder="New password">
+    <label>Role</label>
+    <div class="seg" id="eu_role">
+      <button type="button" class="seg-btn ${u.role!=='manager'?'active':''}" data-val="field" onclick="pickSegByValue('eu_role', 'field')">Field</button>
+      <button type="button" class="seg-btn ${u.role==='manager'?'active':''}" data-val="manager" onclick="pickSegByValue('eu_role', 'manager')">Manager</button>
+    </div>
     <label>Status</label>
     <select id="eu_active">
       <option value="true" ${u.active!==false?'selected':''}>Active</option>
@@ -1356,10 +1656,12 @@ function openEditUser(id){
       <button class="btn-primary" onclick="saveEditUser('${id}')">Save</button>
     </div>
   `);
+  selectedSeg.eu_role = u.role === 'manager' ? 'manager' : 'field';
 }
 async function saveEditUser(id){
   const updates = {
     name: clean(document.getElementById('eu_name').value),
+    role: selectedSeg.eu_role || 'field',
     active: document.getElementById('eu_active').value === 'true'
   };
   const newPass = document.getElementById('eu_password').value;
